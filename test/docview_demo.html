@@ -13,7 +13,7 @@
 <body>
     <div class="container">
 
-        <h1>commandparser <small>UNIX-style command line parsing</h1>
+        <h1>commandparser <small>UNIX-style command line parsing for Spin</small></h1>
         <!-- FILE NAME AND TAG LINE GOES HERE -->
 
         <hr>
@@ -27,107 +27,124 @@
                     </div>
                     <div class="panel-body">
 
+                        <!-- TABLE OF CONTENTS GOES HERE -->
 <ul>
 <li>
 <a href="#toc_0">Usage</a>
 <ul>
 <li>
 <a href="#toc_1">Setting up the parser</a>
+</li>
+<li>
+<a href="#toc_2">Processing commands</a>
+</li>
+<li>
+<a href="#toc_3">Processing options and positional arguments</a>
+</li>
+</ul>
+</li>
+<li>
+<a href="#toc_4">Functions</a>
 <ul>
 <li>
-<a href="#toc_2">Setting the description</a>
+<a href="#toc_5">Start</a>
 </li>
 <li>
-<a href="#toc_3">Adding a command</a>
+<a href="#toc_6">Process</a>
 </li>
 <li>
-<a href="#toc_4">Adding another command</a>
+<a href="#toc_7">AddCommand</a>
 </li>
 <li>
-<a href="#toc_5">Starting up</a>
-</li>
-</ul>
+<a href="#toc_8">AddOption</a>
 </li>
 <li>
-<a href="#toc_6">Processing arguments</a>
+<a href="#toc_9">AddPositionalArgument</a>
 </li>
 <li>
-<a href="#toc_7">Functions</a>
-<ul>
-<li>
-<a href="#toc_8">Start</a>
+<a href="#toc_10">PositionalArgument</a>
 </li>
 <li>
-<a href="#toc_9">Process</a>
+<a href="#toc_11">IsCommand</a>
 </li>
 <li>
-<a href="#toc_10">AddCommand</a>
+<a href="#toc_12">IsOption</a>
 </li>
 <li>
-<a href="#toc_11">AddOption</a>
+<a href="#toc_13">IsSet</a>
 </li>
 <li>
-<a href="#toc_12">AddPositionalArgument</a>
+<a href="#toc_14">Value</a>
 </li>
 <li>
-<a href="#toc_13">PositionalArgument</a>
+<a href="#toc_15">SetDescription</a>
 </li>
 <li>
-<a href="#toc_14">IsCommand</a>
+<a href="#toc_16">ErrorString</a>
 </li>
 <li>
-<a href="#toc_15">IsOption</a>
-</li>
-<li>
-<a href="#toc_16">IsSet</a>
-</li>
-<li>
-<a href="#toc_17">Value</a>
-</li>
-<li>
-<a href="#toc_18">SetDescription</a>
-</li>
-<li>
-<a href="#toc_19">ErrorString</a>
-</li>
-<li>
-<a href="#toc_20">Usage</a>
+<a href="#toc_17">Usage</a>
 </li>
 </ul>
 </li>
 </ul>
-</li>
-</ul>
-                        <!-- TABLE OF CONTENTS GOES HERE -->
 
                     </div>
                 </div>
 
             </div>
             <div class="col-md-8">
-<pre><code>OBJ
-    commandparser : "commandparser"</code></pre>
 
-<h2>Description</h2>
-
+                <!-- CONTENT GOES HERE -->
 <p>This object defines a rich command line parser for Spin terminals.</p>
 
 <p>Some key features:</p>
 
 <ul>
-<li><p>Automatically generates command line help.</p></li>
-<li><p>Supports options and one positional argument.</p></li>
-<li><p>Supports multiple commands.</p></li>
-<li><p>Uses only the <code>string</code> library so you can plug it into any output driver you want.</p></li>
+<li>  Automatically generates command line help.</li>
+<li>  Supports options and one positional argument.</li>
+<li>  Supports multiple commands.</li>
+<li>  Uses only the <code>string</code> library so you can plug it into any output driver you want.</li>
 </ul>
 
-<h1 id="toc_0">Usage</h1>
+<p><code>commandparser</code> will generate your list of commands for you on demand.</p>
+
+<pre><code>$ help
+This shell enables an interface to a live Propeller for debugging.
+commands:
+
+hex         output contents of memory to terminal
+info        print information about the running application
+help        show help
+</code></pre>
+
+<p>It will also generate help text for individual commands.</p>
+
+<pre><code>$ help hex
+Usage: hex [OPTIONS]... ADDR
+
+options:
+
+    -l VAL      Lines to print (default 16, limit 64)
+
+positional argument:
+
+    ADDR        The starting address of the RAM to examine.
+</code></pre>
+
+<p>It generates specific errors when incorrect commands are typed.</p>
+
+<pre><code>$ hex -l
+ERROR: Option missing parameter
+</code></pre>
+
+<h2 id="toc_0">Usage</h2>
 
 <p>As with any thing else, we can define a string in place or in a DAT block elsewhere.
 In this case, however, it is a good idea to define them in a DAT block because we will
 refer to the strings by name frequently, and this way it is less wasteful.</p>
 
-<h2 id="toc_1">Setting up the parser</h2>
+<h3 id="toc_1">Setting up the parser</h3>
 
 <p>So let&#39;s start by writing out all our descriptions of the commands we want to use.</p>
 
@@ -156,7 +173,7 @@ refer to the strings by name frequently, and this way it is less wasteful.</p>
     pos_file_desc       byte    &quot;The file on which to operate&quot;,0
 </code></pre>
 
-<h3 id="toc_2">Setting the description</h3>
+<h4>Setting the description</h4>
 
 <p>The description gives people a general overview of what this interface is for. It is the
 first thing displayed when <code>Usage</code> is called.</p>
@@ -164,7 +181,7 @@ first thing displayed when <code>Usage</code> is called.</p>
 <pre><code>commandparser.SetDescription(@data_description)
 </code></pre>
 
-<h3 id="toc_3">Adding a command</h3>
+<h4>Adding a command</h4>
 
 <p>Let&#39;s add our first command, <code>hex</code>. We store the return value from <code>AddCommand</code> in a variable
 because we will need it to add options to it.</p>
@@ -181,7 +198,7 @@ commandparser.AddOption (hex, @opt<em>d, @opt</em>d_desc, false)</p>
 
 <p>commandparser.AddPositionalArgument (hex, @pos<em>file, @pos</em>file_desc)</p>
 
-<h3 id="toc_4">Adding another command</h3>
+<h4>Adding another command</h4>
 
 <p>Now that we&#39;ve added <code>hex</code>, let&#39;s add a second command called <code>info</code>.</p>
 
@@ -191,10 +208,10 @@ commandparser.AddOption (hex, @opt<em>d, @opt</em>d_desc, false)</p>
 <p>By default, this library allows a maximum of 5 commands, 5 options, and 10 arguments.
 This can be easily change by updating the constants.</p>
 
-<h3 id="toc_5">Starting up</h3>
+<h4>Starting up</h4>
 
 <p>The only thing left to do before we can start parsing arguments is to start the parser.
-This performs all the remaining setup left.</p>
+This performs the remaining setup.</p>
 
 <pre><code>commandparser.Start(@line, MAX_LINE)
 </code></pre>
@@ -210,22 +227,65 @@ VAR
     byte    line[MAX_LINE]
 </code></pre>
 
-<h2 id="toc_6">Processing arguments</h2>
+<h3 id="toc_2">Processing commands</h3>
 
-<h2 id="toc_7">Functions</h2>
+<p>Processing arguments is straightforward. It is as simple as setting up some boilerplate code.</p>
 
-<h3 id="toc_8">Start</h3>
+<p>The first step is running <code>Process</code>, and checking to see if it returned any errors. If so,
+we can get more information about what happened with <code>ErrorString</code> and remind the user how
+to use the command line with <code>Usage</code>. The printout from <code>Usage</code> is context-sensitive and changes
+depending on what the user was last doing.</p>
+
+<pre><code>if (i := commandparser.Process) &lt;&gt; commandparser#ERROR_NONE
+    term.Str (commandparser.ErrorString(i))
+    term.Str (commandparser.Usage)
+</code></pre>
+
+<p>We can also explicitly print the help information if a command is received.</p>
+
+<p>elseif commandparser.IsCommand (@cmd_help)
+    term.Str (commandparser.Usage)</p>
+
+<p>Here is where we start processing commands</p>
+
+<pre><code>elseif commandparser.IsCommand (@cmd_hex)
+    HexCommand
+
+elseif commandparser.IsCommand (@cmd_info)
+    InfoCommand
+</code></pre>
+
+<p>An <code>else</code> is not be needed as an error would have been received before it had a chance to get here.</p>
+
+<h3 id="toc_3">Processing options and positional arguments</h3>
+
+<p>Once the command is known, we can start processing the arguments for individual commands with the
+following functions: <code>IsSet</code>, <code>Value</code>, and <code>PositionalArgument</code>.</p>
+
+<ul>
+<li>  <code>IsSet</code> returns true if an option was set, otherwise false.</li>
+<li>  <code>Value</code> returns a pointer to the string containing the value of the option if available, or null.</li>
+<li>  <code>PositionalArgument</code> returns a pointer to the string containing the positional argument, or null
+if not available.</li>
+</ul>
+
+<p>And that&#39;s all. The parser is ready to use.    </p>
+
+<h2 id="toc_4">Functions</h2>
+<hr>
+
+<h3 id="toc_5">Start</h3>
 
 <p>Initialize the command line parser. You will need provide a string and
 corresponding size of which you want the parser to be able to handle.</p>
 
-<h3 id="toc_9">Process</h3>
+<h3 id="toc_6">Process</h3>
 
 <p>Process all command line tokens inside of the string.</p>
 
 <p>This command should be run once every time ths argument string changes.</p>
 
-<h3 id="toc_10">AddCommand</h3>
+<h3 id="toc_7">AddCommand</h3>
 
 <p>Add a new command to the parser, with the name <code>name</code> and
 a brief description called <code>description</code>.</p>
@@ -233,7 +293,7 @@ a brief description called <code>description</code>.</p>
 <p>This parser supports multiple commands, with different options
 and positional arguments for each command.</p>
 
-<h3 id="toc_11">AddOption</h3>
+<h3 id="toc_8">AddOption</h3>
 
 <p>Add an option to an existing command.</p>
 
@@ -254,7 +314,7 @@ should be single word.</p>
 <p>This function does nothing if the command is not
 already defined.</p>
 
-<h3 id="toc_12">AddPositionalArgument</h3>
+<h3 id="toc_9">AddPositionalArgument</h3>
 
 <p>Add a positional argument to the command line parser.</p>
 
@@ -269,37 +329,37 @@ For example, if you had the following list of arguments:</p>
 <p>This command line parser supports exactly one positional
 argument per command.</p>
 
-<h3 id="toc_13">PositionalArgument</h3>
+<h3 id="toc_10">PositionalArgument</h3>
 
 <p>Return a pointer to the string containing the positional
 argument.</p>
 
-<h3 id="toc_14">IsCommand</h3>
+<h3 id="toc_11">IsCommand</h3>
 
 <p>Return true if the command passed to the parser is equal
 to <code>cmd</code>, otherwise false.</p>
 
-<h3 id="toc_15">IsOption</h3>
+<h3 id="toc_12">IsOption</h3>
 
 <p>Return true if the argument at position <code>n</code> in the string
 is an option, otherwise false.</p>
 
-<h3 id="toc_16">IsSet</h3>
+<h3 id="toc_13">IsSet</h3>
 
 <p>Return true if the option <code>option</code> was passed on the
 command line, otherwise false.</p>
 
-<h3 id="toc_17">Value</h3>
+<h3 id="toc_14">Value</h3>
 
 <p>Return a pointer to the string containing the value of
 the option <code>option</code>.</p>
 
-<h3 id="toc_18">SetDescription</h3>
+<h3 id="toc_15">SetDescription</h3>
 
 <p>Set a brief description for the command line parser and
 what it does.</p>
 
-<h3 id="toc_19">ErrorString</h3>
+<h3 id="toc_16">ErrorString</h3>
 
 <p>Return a string describing the error that was thrown when
 <code>Process</code> was called.</p>
@@ -308,7 +368,7 @@ what it does.</p>
     term.Str(commandparser.ErrorString(i))
 </code></pre>
 
-<h3 id="toc_20">Usage</h3>
+<h3 id="toc_17">Usage</h3>
 
 <p>Print a formatted help of the current command line parser.</p>
 
@@ -325,9 +385,6 @@ is printed.</p></li>
 or <code>help</code> passed with the name of a valid command, usage
 for that command is printed.        </p></li>
 </ul>
-
-<p>&quot;</p>
-                <!-- CONTENT GOES HERE -->
 
             </div>
         </div>
