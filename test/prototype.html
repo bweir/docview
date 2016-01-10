@@ -1,0 +1,316 @@
+<html>
+<head>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <div class="container">
+
+        <h1>com.serial.terminal <small>Serial library with terminal capabilities.</small></h1>
+<hr>
+
+<div class="row">
+    <div class="col-md-4">
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Contents</h3>
+            </div>
+        <div class="panel-body">
+<ul>
+<li>
+<a href="#toc_00">Description</a>
+</li>
+<li>
+<a href="#toc_0">Usage</a>
+</li>
+<li>
+<a href="#toc_1">Functions</a>
+<ul>
+<li>
+<a href="#toc_2">Start(baudrate)</a>
+</li>
+<li>
+<a href="#toc_3">StartRxTx(rxpin, txpin, mode, baudrate)</a>
+</li>
+<li>
+<a href="#toc_4">Stop</a>
+</li>
+<li>
+<a href="#toc_5">Count</a>
+</li>
+<li>
+<a href="#toc_6">Flush</a>
+</li>
+<li>
+<a href="#toc_7">Char(ch)</a>
+</li>
+<li>
+<a href="#toc_8">Chars(ch, size)</a>
+</li>
+<li>
+<a href="#toc_9">CharIn</a>
+</li>
+<li>
+<a href="#toc_10">Str(stringptr)</a>
+</li>
+<li>
+<a href="#toc_11">StrIn(stringptr)</a>
+</li>
+<li>
+<a href="#toc_12">StrInMax(stringptr, maxcount)</a>
+</li>
+<li>
+<a href="#toc_13">Dec(value)</a>
+</li>
+<li>
+<a href="#toc_14">DecIn</a>
+</li>
+<li>
+<a href="#toc_15">Bin(value, digits)</a>
+</li>
+<li>
+<a href="#toc_16">BinIn</a>
+</li>
+<li>
+<a href="#toc_17">Hex(value, digits)</a>
+</li>
+<li>
+<a href="#toc_18">HexIn</a>
+</li>
+<li>
+<a href="#toc_19">Clear</a>
+</li>
+<li>
+<a href="#toc_20">NewLine</a>
+</li>
+<li>
+<a href="#toc_21">Position(x, y)</a>
+</li>
+<li>
+<a href="#toc_22">PositionX(x)</a>
+</li>
+<li>
+<a href="#toc_23">PositionY(y)</a>
+</li>
+<li>
+<a href="#toc_24">MoveLeft(x)</a>
+</li>
+<li>
+<a href="#toc_25">MoveRight(x)</a>
+</li>
+<li>
+<a href="#toc_26">MoveUp(y)</a>
+</li>
+<li>
+<a href="#toc_27">MoveDown(y)</a>
+</li>
+<li>
+<a href="#toc_28">ReadLine(line, maxline)</a>
+</li>
+</ul>
+</li>
+</ul>
+        </div>
+        </div>
+
+</div>
+    <div class="col-md-8">
+
+<h2 id="toc_00">Description</h2>
+<p>This object adds extra features specific to Parallax serial terminals.</p>
+
+<p>This object is heavily based on FullDuplexSerialPlus (by Andy Lindsay), which is itself
+heavily based on FullDuplexSerial (by Chip Gracey).</p>
+
+<h2 id="toc_0">Usage</h2>
+
+<ul>
+<li>  Call Start, or StartRxTx, first.</li>
+<li>  Be sure to set the Parallax Serial Terminal software to the baudrate specified in Start, and the proper COM port.</li>
+<li>  At 80 MHz, this object properly receives/transmits at up to 250 Kbaud, or performs transmit-only at up to 1 Mbaud.</li>
+</ul>
+
+<p>Control Character Constants</p>
+
+<h2 id="toc_1">Functions</h2>
+
+<h3 id="toc_2">Start(baudrate)</h3>
+
+<p>Start communication with the Parallax Serial Terminal using the Propeller&#39;s programming connection.
+Waits 1 second for connection, then clears screen.</p>
+
+<p>Parameters</p>
+
+<p>baudrate -  bits per second.  Make sure it matches the Parallax Serial Terminal&#39;s
+            Baud Rate field.</p>
+
+<p>Returns True (non-zero) if cog started, or False (0) if no cog is available.</p>
+
+<h3 id="toc_3">StartRxTx(rxpin, txpin, mode, baudrate)</h3>
+
+<p>Start serial communication with designated pins, mode, and baud.</p>
+
+<p>Parameters</p>
+
+<p>rxpin - input pin; receives signals from external device&#39;s TX pin.
+txpin - output pin; sends signals to  external device&#39;s RX pin.
+mode  - signaling mode (4-bit pattern).
+           bit 0 - inverts rx.
+           bit 1 - inverts tx.
+           bit 2 - open drain/source tx.
+           bit 3 - ignore tx echo on rx.
+baudrate - bits per second.</p>
+
+<p>Returns<br>
+True (non-zero) if cog started, or False (0) if no cog is available.</p>
+
+<h3 id="toc_4">Stop</h3>
+
+<p>Stop serial communication; frees a cog.</p>
+
+<h3 id="toc_5">Count</h3>
+
+<p>Get count of characters in receive buffer.</p>
+
+<h3 id="toc_6">Flush</h3>
+
+<p>Flush receive buffer.</p>
+
+<h3 id="toc_7">Char(ch)</h3>
+
+<p>Send single-byte character.  Waits for room in transmit buffer if necessary.</p>
+
+<h3 id="toc_8">Chars(ch, size)</h3>
+
+<p>Send string of size <code>size</code> filled with <code>bytechr</code>.</p>
+
+<h3 id="toc_9">CharIn</h3>
+
+<p>Receive single-byte character.  Waits until character received.</p>
+
+<h3 id="toc_10">Str(stringptr)</h3>
+
+<p>Send zero-terminated string.
+Parameter</p>
+
+<p>stringptr - pointer to zero terminated string to send.</p>
+
+<h3 id="toc_11">StrIn(stringptr)</h3>
+
+<p>Receive a string (carriage return terminated) and stores it (zero terminated) starting at stringptr.
+Waits until full string received.</p>
+
+<p>Parameter</p>
+
+<p>stringptr - pointer to memory in which to store received string characters.
+            Memory reserved must be large enough for all string characters plus a zero terminator.</p>
+
+<h3 id="toc_12">StrInMax(stringptr, maxcount)</h3>
+
+<p>Receive a string of characters (either carriage return terminated or maxcount in
+length) and stores it (zero terminated) starting at stringptr.  Waits until either
+full string received or maxcount characters received.</p>
+
+<p>Parameters</p>
+
+<p>stringptr - pointer to memory in which to store received string characters.
+            Memory reserved must be large enough for all string characters plus a zero terminator (maxcount + 1).
+maxcount  - maximum length of string to receive, or -1 for unlimited.</p>
+
+<h3 id="toc_13">Dec(value)</h3>
+
+<p>Send value as decimal characters.
+Parameter</p>
+
+<p>value - byte, word, or long value to send as decimal characters.</p>
+
+<h3 id="toc_14">DecIn</h3>
+
+<p>Receive carriage return terminated string of characters representing a decimal value.</p>
+
+<p>Returns
+the corresponding decimal value.</p>
+
+<h3 id="toc_15">Bin(value, digits)</h3>
+
+<p>Send value as binary characters up to digits in length.</p>
+
+<p>Parameters</p>
+
+<p>value  - byte, word, or long value to send as binary characters.
+digits - number of binary digits to send.  Will be zero padded if necessary.</p>
+
+<h3 id="toc_16">BinIn</h3>
+
+<p>Receive carriage return terminated string of characters representing a binary value.</p>
+
+<p>Returns
+the corresponding binary value.</p>
+
+<h3 id="toc_17">Hex(value, digits)</h3>
+
+<p>Send value as hexadecimal characters up to digits in length.
+Parameters</p>
+
+<p>value  - byte, word, or long value to send as hexadecimal characters.
+digits - number of hexadecimal digits to send.  Will be zero padded if necessary.</p>
+
+<h3 id="toc_18">HexIn</h3>
+
+<p>Receive carriage return terminated string of characters representing a hexadecimal value.</p>
+
+<p>Returns
+the corresponding hexadecimal value.</p>
+
+<h3 id="toc_19">Clear</h3>
+
+<p>Clear screen and place cursor at top-left.</p>
+
+<h3 id="toc_20">NewLine</h3>
+
+<p>Clear screen and place cursor at top-left.</p>
+
+<h3 id="toc_21">Position(x, y)</h3>
+
+<p>Position cursor at column x, row y (from top-left).</p>
+
+<h3 id="toc_22">PositionX(x)</h3>
+
+<p>Position cursor at column x of current row.</p>
+
+<h3 id="toc_23">PositionY(y)</h3>
+
+<p>Position cursor at row y of current column.</p>
+
+<h3 id="toc_24">MoveLeft(x)</h3>
+
+<p>Move cursor left x characters.</p>
+
+<h3 id="toc_25">MoveRight(x)</h3>
+
+<p>Move cursor right x characters.</p>
+
+<h3 id="toc_26">MoveUp(y)</h3>
+
+<p>Move cursor up y lines.</p>
+
+<h3 id="toc_27">MoveDown(y)</h3>
+
+<p>Move cursor down y lines.</p>
+
+<h3 id="toc_28">ReadLine(line, maxline)</h3>
+    </div>
+    </div>
+<hr>
+<p><small>Generated by PropellerIDE DocView</small></p>
+    </div>
+</body>
+</html>
