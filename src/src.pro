@@ -1,4 +1,4 @@
-QT += gui widgets
+QT += gui widgets webkitwidgets
 
 TEMPLATE = app
 TARGET = spindoctor

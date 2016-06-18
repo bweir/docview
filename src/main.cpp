@@ -4,6 +4,12 @@
 #include <QTextStream>
 #include <QDebug>
 #include <QMap>
+#include <QStandardPaths>
+#include <QDir>
+
+#include <QApplication>
+#include <QWebView>
+#include <QTemporaryFile>
 
 #include "spindoctor.h"
 
@@ -33,6 +39,18 @@ enum RenderType
     RenderContent,
     RenderTOC
 };
+
+
+enum Block {
+    NoBlock,
+    PubBlock,
+    PriBlock,
+    DatBlock,
+    VarBlock,
+    ConBlock,
+    ObjBlock
+};
+
 
 QString getExtension(QString filename)
 {
@@ -69,7 +87,7 @@ QString getTemplate(QString filename)
 QString convertMarkdown(QString in, RenderType rendertype, int toc_level = 0)
 {
     hoedown_html_flags html_flags = HOEDOWN_HTML_SKIP_HTML;
-    hoedown_extensions extensions = HOEDOWN_EXT_TABLES;
+    hoedown_extensions extensions = (hoedown_extensions) (HOEDOWN_EXT_TABLES | HOEDOWN_EXT_FENCED_CODE);
 
     hoedown_buffer * inputbuffer = hoedown_buffer_new(1024);
     hoedown_buffer * outputbuffer = hoedown_buffer_new(64);
@@ -117,9 +135,11 @@ QString openFile(QString filename)
     return in.readAll();
 }
 
+
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+    QApplication app(argc, argv);
+    QApplication::setApplicationName("spindoctor");
 
     if (argc < 2)
         return 1;
@@ -148,9 +168,13 @@ int main(int argc, char *argv[])
     bool functions = false;
     bool constants = false;
 
+   
+
     QMap<QString, QString> specialkeys;
 
     QString output = "";
+
+    Block block = NoBlock;
 
     foreach(QString s, strings)
     {
@@ -165,7 +189,8 @@ int main(int argc, char *argv[])
         }
         else
         {
-            indentlevel = 0;
+            if (!s.isEmpty())
+                indentlevel = 0;
         }
 
         if (s.startsWith("pub ", Qt::CaseInsensitive))
@@ -183,17 +208,17 @@ int main(int argc, char *argv[])
 
             s.replace(QRegularExpression("\\(.*?\\)[ \t]*?"),"\n");
 
-            output += "\n\n* * *\n\n";
+            output += "\n* * *\n\n";
             output += "### " + s;
 
-            output += "\n> `" + func + "`\n\n";
+            output += "    " + func + "\n\n";
         }
         else
         {
             s = s.right(s.size() - indentlevel) + "\n";
 
             QStringList keys;
-            keys << "title" << "description";
+            keys << "title" << "description" << "version";
 
             if (s.startsWith("@"))
             {
@@ -213,6 +238,8 @@ int main(int argc, char *argv[])
         }
     }
 
+    qDebug() << output;
+
 
     QString title = filename;
     if (specialkeys.contains("title"))
@@ -221,6 +248,9 @@ int main(int argc, char *argv[])
     QString description;
     if (specialkeys.contains("description"))
         description = specialkeys["description"];
+
+    if (specialkeys.contains("version"))
+        title += " v"+specialkeys["version"];
 
     title = wrapTitle(title, description);
 
@@ -231,7 +261,23 @@ int main(int argc, char *argv[])
 
     output = QString(templatetext).arg(title).arg(toc).arg(content).arg("");
 
-    printf("%s",qPrintable(output));
+    QFileInfo fi(filename);
 
-    return 0;
+    QString tmpdir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(tmpdir);
+
+    QTemporaryFile file;
+    file.setFileTemplate(tmpdir+"/"+fi.fileName()+".XXXXXX.html");
+    if (file.open())
+    {
+        qDebug() << "rendered file to" << file.fileName();
+        file.write(qPrintable(output));
+        file.close();
+    }
+
+    QWebView web;
+    web.load(QUrl("file://"+file.fileName()));
+    web.show();
+
+    return app.exec();
 }
