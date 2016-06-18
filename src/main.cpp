@@ -1,9 +1,17 @@
 #include <QCoreApplication>
 #include <QFile>
+#include <QFileInfo>
 #include <QTextStream>
 #include <QDebug>
+#include <QMap>
 
 #include "spindoctor.h"
+
+#include "buffer.h"
+#include "document.h"
+#include "html.h"
+
+#include <unistd.h>
 
 QString lstrip(QString s)
 {
@@ -20,100 +28,78 @@ int getindent(QString s)
     return s.size() - lstrip(s).size();
 }
 
-
-//    // Functions for html.h, 
-//
-//    hoedown_renderer * hoedown_html_renderer_new(hoedown_html_flags render_flags, int nesting_level); 
-//    hoedown_renderer * hoedown_html_toc_renderer_new(int nesting_level);
-//
-//    void hoedown_html_renderer_free(hoedown_renderer *renderer);
-//
-//
-//    // Functions for document.h, the markdown renderer
-//
-//    hoedown_document * hoedown_document_new(const hoedown_renderer *renderer, hoedown_extensions extensions, size_t max_nesting); 
-//
-//    void hoedown_document_render(hoedown_document *doc, hoedown_buffer *ob, const uint8_t *data, size_t size);
-//    void hoedown_document_free(hoedown_document *doc);
-
-
-
-
-/*
-
-
-int main(int argc, char **argv)
+enum RenderType
 {
-    struct option_data data;
-    FILE *file = stdin;
-    hoedown_buffer *ib, *ob;
-    hoedown_renderer *renderer = NULL;
-    void (*renderer_free) (hoedown_renderer *) = NULL;
-    hoedown_document *document;
+    RenderContent,
+    RenderTOC
+};
 
-    data.basename = argv[0];
-    data.done = 0;
-    data.show_time = 0;
-    data.iunit = DEF_IUNIT;
-    data.ounit = DEF_OUNIT;
-    data.filename = NULL;
-    data.renderer = RENDERER_HTML;
-    data.toc_level = 0;
-    data.html_flags = 0;
-    data.extensions = 0;
-    data.max_nesting = DEF_MAX_NESTING;
+QString getExtension(QString filename)
+{
+    QFileInfo fi(filename);
+    return fi.suffix().toLower();
+}
 
-    argc = parse_options(argc, argv, parse_short_option, parse_long_option, parse_argument, &data);
-    if (data.done) return 0;
-    if (!argc) return 1;
+QString wrapPanel(QString text)
+{
+    return "<div class=\"panel panel-default\"><div class=\"panel-body\">" +
+            text +
+           "</div></div>";
+}
 
-    if (data.filename) {
-        file = fopen(data.filename, "r");
-        if (!file) {
-            fprintf(stderr, "Unable to open input file \"%s\": %s\n", data.filename, strerror(errno));
-            return 5;
-        }
-    }
+QString wrapTitle(QString title, QString description)
+{
+    QFileInfo fi(title);
+    if (!fi.suffix().isEmpty())
+        title = fi.completeBaseName();
 
-    ib = hoedown_buffer_new(data.iunit);
+    return QString("<h1>%1 <small>%2</small></h1>").arg(title).arg(description);
+}
 
-    if (hoedown_buffer_putf(ib, file)) {
-        fprintf(stderr, "I/O errors found while reading input.\n");
-        return 5;
-    }
+QString getTemplate(QString filename)
+{
+    QFile file(QString(":/templates/%1.html").arg(filename));
+    file.open(QFile::ReadOnly);
+    QString text = file.readAll();
+    file.close();
 
-    if (file != stdin) fclose(file);
+    return text;
+}
 
-    switch (data.renderer) {
-        case RENDERER_HTML:
-            renderer = hoedown_html_renderer_new(data.html_flags, data.toc_level);
-            renderer_free = hoedown_html_renderer_free;
+QString convertMarkdown(QString in, RenderType rendertype, int toc_level = 0)
+{
+    hoedown_html_flags html_flags = HOEDOWN_HTML_SKIP_HTML;
+    hoedown_extensions extensions = HOEDOWN_EXT_TABLES;
+
+    hoedown_buffer * inputbuffer = hoedown_buffer_new(1024);
+    hoedown_buffer * outputbuffer = hoedown_buffer_new(64);
+    hoedown_buffer_puts(inputbuffer, in.toLocal8Bit().data());
+
+    hoedown_renderer * renderer = NULL;
+
+    switch (rendertype) {
+        case RenderContent:
+            renderer = hoedown_html_renderer_new(html_flags, toc_level);
             break;
-        case RENDERER_HTML_TOC:
-            renderer = hoedown_html_toc_renderer_new(data.toc_level);
-            renderer_free = hoedown_html_renderer_free;
+        case RenderTOC:
+            renderer = hoedown_html_toc_renderer_new(toc_level);
             break;
     };
 
-    ob = hoedown_buffer_new(data.ounit);
-    document = hoedown_document_new(renderer, data.extensions, data.max_nesting);
+    hoedown_document * document = hoedown_document_new(renderer, extensions, 16);
 
-    t1 = clock();
-    hoedown_document_render(document, ob, ib->data, ib->size);
-    t2 = clock();
+    hoedown_document_render(document, outputbuffer, inputbuffer->data, inputbuffer->size);
 
-    hoedown_buffer_free(ib);
+    hoedown_buffer_free(inputbuffer);
     hoedown_document_free(document);
-    renderer_free(renderer);
+    hoedown_html_renderer_free(renderer);
 
-    (void)fwrite(ob->data, 1, ob->size, stdout);
-    hoedown_buffer_free(ob);
+    QString out = QString(QByteArray((char *)outputbuffer->data, (int) outputbuffer->size));
 
-    return 0;
+    hoedown_buffer_free(outputbuffer);
+
+    return out;
 }
-*/
-
-
 
 
 QString openFile(QString filename)
@@ -138,10 +124,8 @@ int main(int argc, char *argv[])
     if (argc < 2)
         return 1;
 
-    QString text = openFile(argv[1]);
-
-
-    //    qDebug() << "THE TEXT: " << text;
+    QString filename = argv[1];
+    QString text = openFile(filename);
 
     SpinDoctor w;
 
@@ -164,6 +148,8 @@ int main(int argc, char *argv[])
     bool functions = false;
     bool constants = false;
 
+    QMap<QString, QString> specialkeys;
+
     QString output = "";
 
     foreach(QString s, strings)
@@ -182,8 +168,6 @@ int main(int argc, char *argv[])
             indentlevel = 0;
         }
 
-        s = s.right(s.size() - indentlevel) + "\n";
-
         if (s.startsWith("pub ", Qt::CaseInsensitive))
         {
             if (!functions)
@@ -192,18 +176,62 @@ int main(int argc, char *argv[])
                 functions = true;
             }
 
-            s.replace(QRegularExpression("^pub[ \t]*",QRegularExpression::CaseInsensitiveOption),"### ")
-             .replace(QRegularExpression("(:|\\||\n)"),"\n")
-             .replace(QRegularExpression("\\(.*?\\)[ \t]*?"),"\n");
+            s.replace(QRegularExpression("(:|\\||\n)"),"\n");
+            s.replace(QRegularExpression("^pub[ \t]*",QRegularExpression::CaseInsensitiveOption),"");
 
+            QString func = s.trimmed();
 
+            s.replace(QRegularExpression("\\(.*?\\)[ \t]*?"),"\n");
+
+            output += "\n\n* * *\n\n";
+            output += "### " + s;
+
+            output += "\n> `" + func + "`\n\n";
         }
+        else
+        {
+            s = s.right(s.size() - indentlevel) + "\n";
 
-        output += s;
+            QStringList keys;
+            keys << "title" << "description";
+
+            if (s.startsWith("@"))
+            {
+                foreach (QString k, keys)
+                {
+                    if (s.startsWith("@"+k, Qt::CaseInsensitive))
+                    {
+                        s = s.right(s.size() - QString("@"+k).size());
+                        specialkeys[k] = s.trimmed();
+                    }
+                }
+            }
+            else
+            {
+                output += s;
+            }
+        }
     }
 
 
-    qDebug() << output;
+    QString title = filename;
+    if (specialkeys.contains("title"))
+        title = specialkeys["title"];
+
+    QString description;
+    if (specialkeys.contains("description"))
+        description = specialkeys["description"];
+
+    title = wrapTitle(title, description);
+
+    QString content = convertMarkdown(output, RenderContent, 3);
+    QString toc = convertMarkdown(output, RenderTOC, 3);
+
+    QString templatetext = getTemplate("bootstrap");
+
+    output = QString(templatetext).arg(title).arg(toc).arg(content).arg("");
+
+    printf("%s",qPrintable(output));
 
     return 0;
 }

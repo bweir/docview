@@ -9,4 +9,10 @@ HEADERS += \
 
 SOURCES += \
     spindoctor.cpp \
-    main.cpp
+    main.cpp \
+    $$files($$PWD/hoedown/src/*)
+
+INCLUDEPATH += $$PWD/hoedown/src/
+
+RESOURCES += \
+    ../templates/templates.qrc \
