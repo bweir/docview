@@ -8,7 +8,7 @@
 
     ## Usage
 
-    -   Call Start, or StartRxTx, first.
+    -   Call `Start`, or `StartRxTx`, first.
     -   Be sure to set the Parallax Serial Terminal software to the baudrate specified in Start, and the proper COM port.
     -   At 80 MHz, this object properly receives/transmits at up to 250 Kbaud, or performs transmit-only at up to 1 Mbaud.
 }}

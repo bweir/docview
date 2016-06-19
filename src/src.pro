@@ -6,9 +6,11 @@ DESTDIR = ../bin/
 
 HEADERS += \
     spindoctor.h \
+    markdown.h \
 
 SOURCES += \
     spindoctor.cpp \
+    markdown.cpp \
     main.cpp \
     $$files($$PWD/hoedown/src/*)
 

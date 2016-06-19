@@ -23,9 +23,9 @@ void SpinDoctor::addRules(QStringList rules)
     }
 }
 
-QString SpinDoctor::process(QString text)
+QStringList SpinDoctor::process(QString text)
 {
-    QString output;
+    QStringList output;
     int state = 0, laststate = 0;
 
     int offset = 0, end = 0;
@@ -69,7 +69,7 @@ QString SpinDoctor::process(QString text)
             length = end - offset + matchend.capturedLength();
         }
 
-        output += text.mid(offset, length);
+        output.append(text.mid(offset, length));
 
         matchstart = re_tokens.match(text, offset + length);
         offset = matchstart.capturedStart();

@@ -32,5 +32,5 @@ public:
     void rebuildRules();
 
 public slots:
-    QString process(QString text);
+    QStringList process(QString text);
 };
