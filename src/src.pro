@@ -1,8 +1,10 @@
 QT += gui widgets webkitwidgets
 
+CONFIG -= debug_and_release app_bundle
+
 TEMPLATE = app
 TARGET = spindoctor
-DESTDIR = ../bin/
+DESTDIR = ../lib/
 
 HEADERS += \
     spindoctor.h \

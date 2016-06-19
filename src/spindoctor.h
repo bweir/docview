@@ -30,7 +30,9 @@ public:
     void addRules(QStringList rules);
 
     void rebuildRules();
+    QStringList filterText(QString text);
 
-public slots:
-    QStringList process(QString text);
+    QString lstrip(QString s);
+    int getIndent(QString s);
+    QString parseIndent(QString text);
 };

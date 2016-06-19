@@ -2,7 +2,7 @@ TEMPLATE  = subdirs
 
 SUBDIRS = \
     src \
-#    app
+    app
 
-#app.depends = src
+app.depends = src
 

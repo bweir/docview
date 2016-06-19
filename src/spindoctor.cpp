@@ -1,8 +1,17 @@
 #include "spindoctor.h"
 
+#include <QDebug>
+
 SpinDoctor::SpinDoctor(QObject *parent)
     : QObject(parent)
 {
+    QStringList b;
+    b << "{{" << "}}"
+        << "''" << "\n"
+        << "^pub\\b" << "(:|\\||\n)";
+
+    addRules(b);
+    rebuildRules();
 }
 
 void SpinDoctor::addRules(QStringList rules)
@@ -23,7 +32,7 @@ void SpinDoctor::addRules(QStringList rules)
     }
 }
 
-QStringList SpinDoctor::process(QString text)
+QStringList SpinDoctor::filterText(QString text)
 {
     QStringList output;
     int state = 0, laststate = 0;
@@ -99,5 +108,54 @@ void SpinDoctor::rebuildRules()
     re_tokens = QRegularExpression(tokenstring, 
             QRegularExpression::MultilineOption |
             QRegularExpression::CaseInsensitiveOption);
+
+    qDebug() << re_tokens;
 }
+
+
+QString SpinDoctor::lstrip(QString s)
+{
+    for (int n = s.size(); n > 0; n--) {
+        if (!s.at(s.size()-n).isSpace()) {
+            return s.right(n);
+        }
+    }
+    return "";
+}
+
+int SpinDoctor::getIndent(QString s)
+{
+    return s.size() - lstrip(s).size();
+}
+
+
+QString SpinDoctor::parseIndent(QString text)
+{
+    int indent = 0;
+    int indentlevel = 0;
+    QStringList lines;
+
+    foreach(QString s, text.split("\n"))
+    {
+        indent = getIndent(s);
+
+        if (indent > 0)
+        {
+            if (indentlevel == 0 || indent < indentlevel)
+            {
+                indentlevel = indent;
+            }
+        }
+        else
+        {
+            if (!s.isEmpty())
+                indentlevel = 0;
+        }
+
+        lines.append(s.right(s.size() - indentlevel));
+    }
+
+    return lines.join("\n");
+}
+
 

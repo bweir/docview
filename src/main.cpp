@@ -15,27 +15,6 @@
 #include "spindoctor.h"
 #include "markdown.h"
 
-QString lstrip(QString s)
-{
-    for (int n = s.size(); n > 0; n--) {
-        if (!s.at(s.size()-n).isSpace()) {
-            return s.right(n);
-        }
-    }
-    return "";
-}
-
-int getindent(QString s)
-{
-    return s.size() - lstrip(s).size();
-}
-
-QString getExtension(QString filename)
-{
-    QFileInfo fi(filename);
-    return fi.suffix().toLower();
-}
-
 QString wrapPanel(QString text)
 {
     return "<div class=\"panel panel-default\"><div class=\"panel-body\">" +
@@ -78,36 +57,24 @@ QString openFile(QString filename)
     return in.readAll();
 }
 
-QString parseIndent(QString text)
+QString parsePubBlock(QString s)
 {
-    int indent = 0;
-    int indentlevel = 0;
-    QStringList lines;
+    QString output;
 
-    foreach(QString s, text.split("\n"))
-    {
-        indent = getindent(s);
+    s.replace(QRegularExpression("(:|\\||\n)"),"\n");
+    s.replace(QRegularExpression("^pub[ \t]*",QRegularExpression::CaseInsensitiveOption),"");
+    
+    QString func = s.trimmed();
+    
+    s.replace(QRegularExpression("\\(.*?\\)[ \t]*?"),"\n");
+    
+    output += "* * *\n\n";
+    output += "### " + s + "\n\n";
+    
+    output += "    " + func + "\n\n";
 
-        if (indent > 0)
-        {
-            if (indentlevel == 0 || indent < indentlevel)
-            {
-                indentlevel = indent;
-            }
-        }
-        else
-        {
-            if (!s.isEmpty())
-                indentlevel = 0;
-        }
-
-        lines.append(s.right(s.size() - indentlevel));
-    }
-
-    return lines.join("\n");
+    return output;
 }
-
-
 
 int main(int argc, char *argv[])
 {
@@ -120,20 +87,11 @@ int main(int argc, char *argv[])
     QString filename = argv[1];
     QString text = openFile(filename);
 
-    SpinDoctor w;
+    SpinDoctor spind;
 
-    QStringList b;
-    b << "{{" << "}}"
-        << "''" << "\n"
-        << "^pub" << "(:|\\||\n)";
-
-    w.addRules(b);
-    w.rebuildRules();
-
-    QStringList textblocks = w.process(text);
+    QStringList textblocks = spind.filterText(text);
 
     bool functions = false;
-    bool constants = false;
 
     QMap<QString, QString> specialkeys;
 
@@ -145,7 +103,7 @@ int main(int argc, char *argv[])
                 .replace("}}","\n")
                 .remove("''");
 
-        sblock = parseIndent(sblock);
+        sblock = spind.parseIndent(sblock);
 
         foreach(QString s, sblock.split("\n"))
         {
@@ -157,17 +115,7 @@ int main(int argc, char *argv[])
                     functions = true;
                 }
 
-                s.replace(QRegularExpression("(:|\\||\n)"),"\n");
-                s.replace(QRegularExpression("^pub[ \t]*",QRegularExpression::CaseInsensitiveOption),"");
-
-                QString func = s.trimmed();
-
-                s.replace(QRegularExpression("\\(.*?\\)[ \t]*?"),"\n");
-
-                output += "* * *\n\n";
-                output += "### " + s + "\n\n";
-
-                output += "    " + func + "\n\n";
+                output += parsePubBlock(s);
             }
             else if (s.startsWith("@"))
             {
